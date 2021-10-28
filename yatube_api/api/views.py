@@ -1,7 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets, permissions, filters
-from rest_framework.response import Response
+from rest_framework import viewsets, permissions, filters, generics
 from rest_framework.pagination import LimitOffsetPagination
 
 
@@ -15,6 +14,9 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    # без этого метода не проходят тесты и в ответ на запрос без параметров всегда приходит с пагинацией,
+    # из фолоу при этом убрать удалось без потерь
 
     def paginate_queryset(self, queryset):
         if 'page' and 'offset' in self.request.query_params:
@@ -66,13 +68,22 @@ class CommentViewSet(viewsets.ModelViewSet):
         super(CommentViewSet, self).perform_destroy(instance)
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+class GroupGetList(generics.ListAPIView):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    def create(self, serializer):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+class GroupGetDetail(generics.RetrieveAPIView):
+    serializer_class = GroupSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    queryset = Group.objects.all()
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        obj = queryset.get(pk=self.kwargs.get('group_id'))
+        self.check_object_permissions(self.request, obj)
+        return obj
 
 
 class FollowViewSet(viewsets.ModelViewSet):
@@ -82,10 +93,19 @@ class FollowViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('following__username',)
 
-    def paginate_queryset(self, queryset):
-        if 'page' and 'offset' in self.request.query_params:
-            return super().paginate_queryset(queryset)
-        return None
+    def get_queryset(self):
+        return Follow.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user, )
+
+
+class FollowGetPost(generics.ListAPIView, generics.CreateAPIView):
+    queryset = Follow.objects.all()
+    serializer_class = FollowSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('following__username',)
 
     def get_queryset(self):
         return Follow.objects.filter(user=self.request.user)
