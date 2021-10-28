@@ -15,16 +15,6 @@ class PostViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    # если отсюда убрать валяться тесты,
-    # на запрос без параметров ответ приходит с пагинацией
-    # из фолоу при этом убрать удалось без потерь,
-    # возможно причина в реализации через вьюсет
-
-    def paginate_queryset(self, queryset):
-        if 'page' and 'offset' in self.request.query_params:
-            return super().paginate_queryset(queryset)
-        return None
-
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -70,22 +60,16 @@ class CommentViewSet(viewsets.ModelViewSet):
         super(CommentViewSet, self).perform_destroy(instance)
 
 
-class GroupGetList(generics.ListAPIView):
+class GroupViewSet(viewsets.ModelViewSet): 
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer 
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,) 
+
+
+class GroupGetList(generics.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-
-
-class GroupGetDetail(generics.RetrieveAPIView):
-    serializer_class = GroupSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    queryset = Group.objects.all()
-
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        obj = queryset.get(pk=self.kwargs.get('group_id'))
-        self.check_object_permissions(self.request, obj)
-        return obj
 
 
 class FollowViewSet(viewsets.ModelViewSet):
