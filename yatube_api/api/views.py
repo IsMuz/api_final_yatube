@@ -15,8 +15,10 @@ class PostViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    # без этого метода не проходят тесты и в ответ на запрос без параметров всегда приходит с пагинацией,
-    # из фолоу при этом убрать удалось без потерь
+    # если отсюда убрать валяться тесты,
+    # на запрос без параметров ответ приходит с пагинацией
+    # из фолоу при этом убрать удалось без потерь,
+    # возможно причина в реализации через вьюсет
 
     def paginate_queryset(self, queryset):
         if 'page' and 'offset' in self.request.query_params:
