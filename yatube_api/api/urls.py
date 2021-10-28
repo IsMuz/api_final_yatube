@@ -15,8 +15,6 @@ router.register(
 )
 
 urlpatterns = [
-    path('v1/groups/', GroupGetList.as_view()),
-    path('v1/groups/<group_id>/', GroupGetDetail.as_view()),
     path('v1/follow/', FollowGetPost.as_view()),
     path('v1/', include(router.urls)),
     path('v1/', include('djoser.urls.jwt'))
