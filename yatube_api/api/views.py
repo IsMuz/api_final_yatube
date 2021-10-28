@@ -60,10 +60,10 @@ class CommentViewSet(viewsets.ModelViewSet):
         super(CommentViewSet, self).perform_destroy(instance)
 
 
-class GroupViewSet(viewsets.ModelViewSet): 
+class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
-    serializer_class = GroupSerializer 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,) 
+    serializer_class = GroupSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
 class GroupGetList(generics.ReadOnlyModelViewSet):
